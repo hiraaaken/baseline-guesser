@@ -93,7 +93,7 @@ MDN/web.dev の Baseline ウィジェットを参考にしたカードUIで、�
 - ログイン・会員登録機能は設けない(匿名プレイ。進捗・記録はすべて端末の `localStorage` に保存)
 - データ生成はビルド前処理スクリプト(Node.js)で `web-features` から静的JSONを出力し、サーバー側コードにバンドルする
 - 出題トークンの一時保存に **Cloudflare KV** を利用する(6節参照)
-- 言語は **TypeScript**。ただし **TypeScript 7(ネイティブGoコンパイラ版)は現時点では使わず、`^5.9` 系にピンする**
+- 言語は **TypeScript**。ただし **TypeScript 7(ネイティブGoコンパイラ版)は現時点では使わず、7未満の最新版(`sv create` 既定の `^6.0` 系)にピンする**
   - 理由: TS 7は `svelte-check`/`svelte2tsx` が依存するCJS API形状を提供しておらず、起動時にクラッシュする(2026-07時点、Svelteチームは対応中・未リリース)
   - Svelte language-toolsがTS 7に正式対応した時点で移行を検討する(7節に追記)
 
