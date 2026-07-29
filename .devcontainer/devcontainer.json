@@ -3,5 +3,7 @@
   "build": { "dockerfile": "Dockerfile" },
   "workspaceFolder": "/workspace",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
-  "forwardPorts": [5173]
+  "remoteUser": "dev",
+  "forwardPorts": [5173],
+  "runArgs": ["-p", "5173:5173"]
 }
