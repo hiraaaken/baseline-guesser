@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# devcontainer内で、リポジトリルート(/workspace)を作業ディレクトリとしてコマンドを実行する。
+#
+# Usage:
+#   bin/dcx aube run dev -- --host 0.0.0.0
+#   bin/dcx aube approve-builds
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+exec devcontainer exec --workspace-folder "$repo_root" -- bash -lc "cd /workspace && $*"

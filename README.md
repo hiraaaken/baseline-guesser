@@ -21,16 +21,22 @@ Dockerfileの変更後など、作り直したい場合は `--remove-existing-co
 
 ### コンテナ内でコマンドを実行する
 
-以降のコマンドはすべて以下の形でコンテナ内で実行する。
+`devcontainer exec --workspace-folder . -- bash -lc "cd /workspace && <command>"` は毎回打つには長いので、[`bin/dcx`](./bin/dcx) というラッパースクリプトを用意している。以降のコマンド例はすべてこれを使う。
 
 ```sh
-devcontainer exec --workspace-folder . -- bash -lc "cd /workspace && <command>"
+bin/dcx <command>
 ```
 
 ### 依存のインストール
 
 ```sh
-devcontainer exec --workspace-folder . -- bash -lc "cd /workspace && aube install"
+bin/dcx aube install
+```
+
+未承認のビルドスクリプト(`esbuild`/`workerd`など)がある場合は、内容を確認して承認する。
+
+```sh
+bin/dcx aube approve-builds
 ```
 
 ### 開発サーバーの起動
@@ -38,7 +44,7 @@ devcontainer exec --workspace-folder . -- bash -lc "cd /workspace && aube instal
 `devcontainer` CLI単体では `devcontainer.json` の `forwardPorts` が効かない([devcontainers/cli#186](https://github.com/devcontainers/cli/issues/186))ため、`--host` 指定とコンテナ側の `runArgs` によるポート公開(設定済み)の両方が必要。
 
 ```sh
-devcontainer exec --workspace-folder . -- bash -lc "cd /workspace && aube run dev -- --host 0.0.0.0"
+bin/dcx aube run dev -- --host 0.0.0.0
 ```
 
 ブラウザで [http://localhost:5173](http://localhost:5173) を開いて確認する。
@@ -54,7 +60,7 @@ devcontainer exec --workspace-folder . -- bash -lc "cd /workspace && aube run de
 ## ビルド
 
 ```sh
-devcontainer exec --workspace-folder . -- bash -lc "cd /workspace && aube run build"
+bin/dcx aube run build
 ```
 
 `aube run preview` でプロダクションビルドをプレビューできる。
