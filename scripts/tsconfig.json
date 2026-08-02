@@ -1,0 +1,14 @@
+{
+	"compilerOptions": {
+		"target": "esnext",
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"strict": true,
+		"noEmit": true,
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"rewriteRelativeImportExtensions": true,
+		"types": ["node"]
+	},
+	"include": ["**/*.ts", "../src/lib/server/data/types.ts"]
+}
