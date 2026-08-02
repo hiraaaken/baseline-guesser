@@ -11,5 +11,14 @@
 		"directory": ".svelte-kit/cloudflare"
 	},
 	"workers_dev": true,
-	"preview_urls": true
+	"preview_urls": true,
+	"kv_namespaces": [
+		{
+			"binding": "QUIZ_KV",
+			// ローカル開発用のプレースホルダID。本番デプロイ前に
+			// `wrangler kv namespace create QUIZ_KV` で実際のnamespaceを作成し、
+			// 発行されたidに置き換えること。
+			"id": "REPLACE_WITH_REAL_KV_NAMESPACE_ID"
+		}
+	]
 }
