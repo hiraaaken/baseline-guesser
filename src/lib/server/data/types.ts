@@ -7,18 +7,20 @@ interface CssPropertySupport {
 	safari: string | null;
 }
 
-export type CssPropertyData =
-	| {
-			name: string;
-			baselineStatus: 'high' | 'low';
-			baselineDate: string;
-			support: CssPropertySupport;
-			description: string;
-	  }
-	| {
-			name: string;
-			baselineStatus: 'limited';
-			baselineDate: null;
-			support: CssPropertySupport;
-			description: string;
-	  };
+interface CssPropertyBase {
+	name: string;
+	support: CssPropertySupport;
+	description: string;
+}
+
+export interface DatedCssPropertyData extends CssPropertyBase {
+	baselineStatus: 'high' | 'low';
+	baselineDate: string;
+}
+
+export interface LimitedCssPropertyData extends CssPropertyBase {
+	baselineStatus: 'limited';
+	baselineDate: null;
+}
+
+export type CssPropertyData = DatedCssPropertyData | LimitedCssPropertyData;
