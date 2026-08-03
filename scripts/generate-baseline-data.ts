@@ -4,29 +4,6 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import type { BaselineStatus, CssPropertyData } from '../src/lib/server/data/types.ts';
 
-interface CompatKeyEntry {
-	baseline: false | 'high' | 'low';
-	baseline_high_date?: string;
-	baseline_low_date?: string;
-	support?: {
-		chrome?: string;
-		edge?: string;
-		firefox?: string;
-		safari?: string;
-	};
-}
-
-interface Feature {
-	kind: 'feature' | 'moved' | 'split';
-	discouraged?: unknown;
-	description?: string;
-	status?: {
-		by_compat_key?: Record<string, CompatKeyEntry>;
-	};
-}
-
-const featureMap = features as unknown as Record<string, Feature>;
-
 const OUTPUT_PATH = fileURLToPath(
 	new URL('../src/lib/server/data/baseline-css-properties.json', import.meta.url)
 );
@@ -37,8 +14,8 @@ const PLAIN_PROPERTY_KEY = /^css\.properties\.([a-zA-Z-]+)$/;
 
 const properties: CssPropertyData[] = [];
 
-for (const featureId of Object.keys(featureMap)) {
-	const feature = featureMap[featureId];
+for (const featureId of Object.keys(features)) {
+	const feature = features[featureId];
 	if (feature.kind !== 'feature') continue;
 
 	const byCompatKey = feature.status?.by_compat_key;
@@ -71,6 +48,10 @@ for (const featureId of Object.keys(featureMap)) {
 			continue;
 		}
 
+		// entry.baseline はパッケージ側の型上は boolean | 'high' | 'low' だが、
+		// 実データでtrueになることはないため、文字列以外は出題対象外として扱う
+		if (typeof entry.baseline !== 'string') continue;
+
 		const baselineStatus: BaselineStatus = entry.baseline;
 		const rawBaselineDate =
 			baselineStatus === 'high' ? entry.baseline_high_date : entry.baseline_low_date;
@@ -99,7 +80,7 @@ for (const prop of properties) {
 	} else if (
 		existing.baselineStatus !== 'limited' &&
 		prop.baselineStatus !== 'limited' &&
-		(prop.baselineDate as string) < (existing.baselineDate as string)
+		prop.baselineDate < existing.baselineDate
 	) {
 		byName.set(prop.name, prop);
 	}

@@ -17,9 +17,8 @@ CSSに詳しい人ほど「あ、このタイミングでBaseline入りしたの
 ### 2.1 画面フロー
 
 1. **ホーム画面**: タイトルと「問題を始める」ボタンのみのシンプルな構成。**ログイン機能は設けない**(匿名プレイ)
-2. **コース選択画面**: 寿司打を参考に、**4つのコース**から1つを選ぶ
-   - 初級(5問)/ 中級(10問)/ 上級(15問): 難易度別。出題数に加え、誤答(distractor)をBaseline時期がどれだけ近いプロパティから選ぶか(distractorWindow)を変える。上級ほど近い時期のプロパティが混ざり見分けにくくなる
-   - 限定対応(Limited availability): Baseline日付を持たない `baseline:false` のプロパティが対象。「いつBaseline入りしたか」ではなく「どのブラウザの組み合わせで対応しているか」を当てる、別軸のクイズ(2.4節)
+2. **コース選択画面**: 寿司打を参考に、**初級(5問)/ 中級(10問)/ 上級(15問)** の3コースから1つを選ぶ
+   - 出題数に加え、誤答(distractor)をBaseline時期がどれだけ近いプロパティから選ぶか(distractorWindow)を変える。上級ほど近い時期のプロパティが混ざり見分けにくくなる
 3. **プレイ画面**: コースを選ぶと、サーバーが出題データを生成してクイズが始まる(2.3節)
 4. **フィードバック**: 1問ごとに回答直後、正誤・正解・補足説明を表示
 5. **リザルト画面**: コース終了後にスコアを表示
@@ -49,9 +48,8 @@ MDN/web.dev の Baseline ウィジェットを参考にしたカードUIで、�
 
 - **Baseline情報を持つ全CSSプロパティ**を対象とする(Widely available / Newly available / Limited availability を問わず絞り込みなし)
 - ベンダープレフィックス付きプロパティ、廃止(deprecated)プロパティは出題対象外とする
-- `baseline: false`(Limited availability)のプロパティは、Baseline日付を持たないため通常のコース(初級/中級/上級)には混ぜず、**「限定対応」コース専用のプール**として扱う
-  - 出題内容: 対象プロパティの対応ブラウザアイコン(2.2節と同じUI)を見せ、「どのプロパティか」を当てる。Baselineバッジは表示しない(まだBaselineに達していないため)
-  - 誤答(distractor)の選び方: Baseline時期という軸が使えないため、代わりに**対応ブラウザの組み合わせパターン(fingerprint)が近いもの**を選ぶ(Chrome/Edge/Firefox/Safariそれぞれの対応有無をビット列とみなし、Hamming距離が小さい順)
+- `baseline: false`(Limited availability)のプロパティも他と同じ1つのプールに混ぜて出題する
+  - Baseline日付を持たないため、distractor選定(2.3節)の「Baseline日付でソートした配列」の中では末尾に配置する。結果として、limited同士が近くに集まり、それらの間で誤答が選ばれやすくなる
 
 ### 2.5 スコア・記録
 
@@ -122,7 +120,7 @@ SvelteKitのAPIルート(`src/routes/api/**/+server.ts`)として実装する。
 - サーバー側処理: KVから `questionToken` に対応する正解プロパティ名を取得して照合し、**照合後にそのKVエントリを削除**(使い捨てトークンとし、同じ問題への再回答・リプレイを防ぐ)
 - Response: `{ correct: boolean, correctAnswer: string, description?: string }`
 
-コース一覧(4コースのメタ情報)は変動が少ないため、API化せずSvelteKitフロントエンド側の静的設定として保持する。
+コース一覧(3コースのメタ情報)は変動が少ないため、API化せずSvelteKitフロントエンド側の静的設定として保持する。
 
 ## 7. データモデル(案)
 
@@ -134,7 +132,9 @@ type BaselineStatus = "high" | "low" | "limited";
 interface CssPropertyData {
   name: string;           // 例: "gap"
   baselineStatus: BaselineStatus;
-  baselineDate: string | null;  // 例: "2020-09-15"。limitedの場合はnull
+  baselineDate: string | null;  // 例: "2020-09-15"。limitedの場合はnull。
+  // (`string?` はキー自体を省略可能にするが、クライアントに常にキーを
+  //  持たせたい=値の有無だけを変えたいため `| null` を使う)
   support: {
     chrome: string | null;  // null = 非対応
     edge: string | null;
