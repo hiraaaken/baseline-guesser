@@ -1,11 +1,10 @@
-export type CourseId = 'beginner' | 'intermediate' | 'advanced' | 'limited';
+export type CourseId = 'beginner' | 'intermediate' | 'advanced';
 
 export interface CourseDefinition {
 	id: CourseId;
 	label: string;
 	questionCount: number;
-	// datedコース(beginner/intermediate/advanced)のみで使用
-	distractorWindow?: number;
+	distractorWindow: number;
 }
 
 export const COURSES: Record<CourseId, CourseDefinition> = {
@@ -26,11 +25,6 @@ export const COURSES: Record<CourseId, CourseDefinition> = {
 		label: '上級',
 		questionCount: 15,
 		distractorWindow: 6
-	},
-	limited: {
-		id: 'limited',
-		label: '限定対応(Limited availability)',
-		questionCount: 10
 	}
 };
 

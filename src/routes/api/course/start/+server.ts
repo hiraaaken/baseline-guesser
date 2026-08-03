@@ -1,8 +1,8 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { COURSES, isCourseId } from '$lib/server/courses';
-import { properties, limitedProperties } from '$lib/server/data/properties';
-import { generateQuestions, generateLimitedQuestions } from '$lib/server/quiz';
+import { properties } from '$lib/server/data/properties';
+import { generateQuestions } from '$lib/server/quiz';
 import type { CourseStartResponse, QuizQuestion } from '$lib/types';
 
 const TOKEN_TTL_SECONDS = 60 * 15;
@@ -21,10 +21,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	}
 
 	const course = COURSES[courseId];
-	const generated =
-		courseId === 'limited'
-			? generateLimitedQuestions(limitedProperties, course.questionCount)
-			: generateQuestions(properties, course);
+	const generated = generateQuestions(properties, course);
 
 	const questions: QuizQuestion[] = await Promise.all(
 		generated.map(async ({ answer, choices }) => {

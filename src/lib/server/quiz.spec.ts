@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	generateQuestions,
-	pickDistractors,
-	generateLimitedQuestions,
-	pickDistractorsBySupportPattern
-} from './quiz';
+import { generateQuestions, pickDistractors } from './quiz';
 import type { CssPropertyData } from './data/types';
 import type { CourseDefinition } from './courses';
 
@@ -38,7 +33,6 @@ describe('pickDistractors', () => {
 		expect(new Set(names).size).toBe(3);
 		expect(names).not.toContain(properties[answerIndex].name);
 
-		// windowの範囲(answerIndex±5付近)に収まっていること
 		for (const d of distractors) {
 			const idx = properties.indexOf(d);
 			expect(Math.abs(idx - answerIndex)).toBeLessThanOrEqual(windowSize);
@@ -101,79 +95,9 @@ describe('generateQuestions', () => {
 	});
 
 	it('プロパティ数が問題数より少ない場合、問題数を切り詰める', () => {
-		const properties = makeProperties(3 + 4); // 4択に必要な最低件数はギリギリ確保
+		const properties = makeProperties(3 + 4);
 		const smallCourse: CourseDefinition = { ...course, questionCount: 20 };
 		const questions = generateQuestions(properties, smallCourse, sequentialRng());
 		expect(questions.length).toBeLessThanOrEqual(properties.length);
-	});
-});
-
-function makeLimitedProperty(
-	name: string,
-	support: Partial<CssPropertyData['support']>
-): CssPropertyData {
-	return {
-		name,
-		baselineStatus: 'limited',
-		baselineDate: null,
-		support: { chrome: null, edge: null, firefox: null, safari: null, ...support },
-		description: `description for ${name}`
-	};
-}
-
-describe('pickDistractorsBySupportPattern', () => {
-	it('対応ブラウザのパターンが近い(Hamming距離が小さい)ものを優先して選ぶ', () => {
-		const properties = [
-			makeLimitedProperty('answer', { chrome: '1', edge: '1', firefox: '1', safari: '1' }),
-			makeLimitedProperty('close-1', { chrome: '1', edge: '1', firefox: '1', safari: null }), // distance 1
-			makeLimitedProperty('close-2', { chrome: '1', edge: '1', firefox: null, safari: '1' }), // distance 1
-			makeLimitedProperty('close-3', { chrome: '1', edge: null, firefox: '1', safari: '1' }), // distance 1
-			makeLimitedProperty('far-1', {}), // distance 4(全非対応)
-			makeLimitedProperty('far-2', { firefox: '1' }) // distance 3
-		];
-
-		const distractors = pickDistractorsBySupportPattern(properties, 0, sequentialRng());
-		const names = distractors.map((d) => d.name).sort();
-
-		expect(names).toHaveLength(3);
-		expect(names).not.toContain('answer');
-		expect(names).toEqual(['close-1', 'close-2', 'close-3']);
-	});
-});
-
-describe('generateLimitedQuestions', () => {
-	function makeLimitedProperties(count: number): CssPropertyData[] {
-		return Array.from({ length: count }, (_, i) =>
-			makeLimitedProperty(`limited-${i}`, {
-				chrome: i % 2 === 0 ? '1' : null,
-				edge: i % 3 === 0 ? '1' : null,
-				firefox: i % 4 === 0 ? '1' : null,
-				safari: i % 5 === 0 ? '1' : null
-			})
-		);
-	}
-
-	it('指定した問題数を生成する', () => {
-		const properties = makeLimitedProperties(30);
-		const questions = generateLimitedQuestions(properties, 10, sequentialRng());
-		expect(questions).toHaveLength(10);
-	});
-
-	it('各問題は正解を含む重複のない4択を持つ', () => {
-		const properties = makeLimitedProperties(30);
-		const questions = generateLimitedQuestions(properties, 10, sequentialRng());
-
-		for (const q of questions) {
-			expect(q.choices).toHaveLength(4);
-			expect(new Set(q.choices).size).toBe(4);
-			expect(q.choices).toContain(q.answer.name);
-		}
-	});
-
-	it('正解が重複しない', () => {
-		const properties = makeLimitedProperties(30);
-		const questions = generateLimitedQuestions(properties, 10, sequentialRng());
-		const names = questions.map((q) => q.answer.name);
-		expect(new Set(names).size).toBe(names.length);
 	});
 });
