@@ -21,3 +21,6 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# 生成データ(web-featuresから `npm run gen:baseline` で生成)
+/src/lib/server/data/baseline-css-properties.json

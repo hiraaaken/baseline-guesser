@@ -17,8 +17,8 @@ CSSに詳しい人ほど「あ、このタイミングでBaseline入りしたの
 ### 2.1 画面フロー
 
 1. **ホーム画面**: タイトルと「問題を始める」ボタンのみのシンプルな構成。**ログイン機能は設けない**(匿名プレイ)
-2. **コース選択画面**: 寿司打を参考に、**3つのコース**(難易度別)から1つを選ぶ
-   - 例: 初級 / 中級 / 上級 のように、出題数や誤答の紛らわしさをコースごとに変える(区分方法は 7節で検討)
+2. **コース選択画面**: 寿司打を参考に、**初級(5問)/ 中級(10問)/ 上級(15問)** の3コースから1つを選ぶ
+   - 出題数に加え、誤答(distractor)をBaseline時期がどれだけ近いプロパティから選ぶか(distractorWindow)を変える。上級ほど近い時期のプロパティが混ざり見分けにくくなる
 3. **プレイ画面**: コースを選ぶと、サーバーが出題データを生成してクイズが始まる(2.3節)
 4. **フィードバック**: 1問ごとに回答直後、正誤・正解・補足説明を表示
 5. **リザルト画面**: コース終了後にスコアを表示
@@ -46,9 +46,10 @@ MDN/web.dev の Baseline ウィジェットを参考にしたカードUIで、�
 
 ### 2.4 出題対象の範囲
 
-- **Baseline情報を持つ全CSSプロパティ**を対象とする(Widely available / Newly available を問わず絞り込みなし)
-- ただし `baseline: false`(まだBaselineに達していない実験的機能)は、クイズの前提(いつBaseline入りしたか)が成立しないため出題対象外とする
-- ベンダープレフィックス付きプロパティ、廃止(deprecated)プロパティも出題対象外とする
+- **Baseline情報を持つ全CSSプロパティ**を対象とする(Widely available / Newly available / Limited availability を問わず絞り込みなし)
+- ベンダープレフィックス付きプロパティ、廃止(deprecated)プロパティは出題対象外とする
+- `baseline: false`(Limited availability)のプロパティも他と同じ1つのプールに混ぜて出題する
+  - Baseline日付を持たないため、distractor選定(2.3節)の「Baseline日付でソートした配列」の中では末尾に配置する。結果として、limited同士が近くに集まり、それらの間で誤答が選ばれやすくなる
 
 ### 2.5 スコア・記録
 
@@ -124,28 +125,30 @@ SvelteKitのAPIルート(`src/routes/api/**/+server.ts`)として実装する。
 ## 7. データモデル(案)
 
 ```ts
-type BaselineStatus = "high" | "low"; // false(未Baseline)は出題対象外のため除外済み
+// "limited" = Limited availability(baseline:falseで日付を持たない)
+type BaselineStatus = "high" | "low" | "limited";
 
 // サーバー内部で保持するプロパティデータ(クライアントには渡さない)
 interface CssPropertyData {
-  id: string;            // 例: "css.properties.gap"
   name: string;           // 例: "gap"
   baselineStatus: BaselineStatus;
-  baselineDate: string;   // 例: "2020-09-15"
+  baselineDate: string | null;  // 例: "2020-09-15"。limitedの場合はnull。
+  // (`string?` はキー自体を省略可能にするが、クライアントに常にキーを
+  //  持たせたい=値の有無だけを変えたいため `| null` を使う)
   support: {
     chrome: string | null;  // null = 非対応
     edge: string | null;
     firefox: string | null;
     safari: string | null;
   };
-  description?: string;   // 答え合わせ時に表示する簡単な説明
+  description: string;   // 答え合わせ時に表示する簡単な説明
 }
 
 // サーバー → クライアント: 出題(正解は含まない)
 interface QuizQuestion {
   questionToken: string;   // Cloudflare KVに正解と紐付けて保存される、不透明な使い捨てトークン
   baselineStatus: BaselineStatus;
-  baselineDate: string;
+  baselineDate: string | null;
   support: CssPropertyData["support"];
   choices: string[];       // 4択のプロパティ名(シャッフル済み)
 }
@@ -166,12 +169,10 @@ interface AnswerResult {
 
 ## 8. 今後の検討事項(未確定・要議論)
 
-- **コースの区分方法**: 出題数の長さで分けるか(寿司打的に短/中/長)、誤答の紛らわしさ(distractorの近さ)で分けるか、あるいは両方の組み合わせか
 - **コースのスコア指標**: 正答数のみか、寿司打のようにタイム要素(回答スピード)も加味するか
-- 誤答選定で「近さ」の閾値・件数が不足するプロパティ(Baseline初期の頃のプロパティなど)が出た場合のフォールバック挙動
 - 説明文(description)の出典・取得方法(MDNデータを別途組み込むか、`web-features` の `description` フィールドで足りるか)
 - モバイル対応・アクセシビリティ要件
-- **保留中: TypeScript 7への移行** — `svelte-check`/`svelte2tsx` がTS 7のネイティブコンパイラに対応次第、`^5.9` 系からの移行を検討する
+- **保留中: TypeScript 7への移行** — `svelte-check`/`svelte2tsx` がTS 7のネイティブコンパイラに対応次第、7未満の版からの移行を検討する
 - **保留中: デイリーチャレンジモード・SNS共有機能**
   - 以前の検討では Wordle 型のデイリーモード(全員同じ問題+結果のSNS共有)をニッチ層への訴求の軸として想定していたが、現時点ではランダム出題のコース制を優先し、デイリーモードは一旦スコープ外とする
   - ニッチ層への浸透・拡散という当初の狙いを考えると、コース制が軌道に乗った後に再検討する価値がある

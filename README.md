@@ -2,6 +2,14 @@
 
 CSSプロパティが各主要ブラウザでいつからサポートされたか(＝Baseline情報)だけを手がかりに、そのCSSプロパティ名を当てる4択クイズアプリ。詳細な仕様は [`SPEC.md`](./SPEC.md) を参照。
 
+## Baselineデータについて
+
+Baselineデータは [`web-features`](https://www.npmjs.com/package/web-features) パッケージから [`scripts/generate-baseline-data.ts`](./scripts/generate-baseline-data.ts) で抽出している。
+
+- `web-features` の `features` は「機能単位」のデータで、1つのfeatureが複数のCSSプロパティ・複数の文脈をまとめていることがある(例: `absolute-positioning` というfeatureが `position`/`align-self`/`justify-self` など複数のプロパティ関連の挙動を束ねている)
+- 各featureは `status.by_compat_key` に、[MDN Browser Compat Data](https://github.com/mdn/browser-compat-data) 形式のキー(compat key。例: `css.properties.gap`)ごとの詳細なBaseline/対応ブラウザ情報を持つ
+- compat keyには `css.properties.position.absolute` のような「特定の値・文脈付き」のものも含まれるため、`css.properties.<name>` という「素のプロパティキー」だけを正規表現で抽出している(詳細は生成スクリプト参照)
+
 ## 開発環境
 
 コンテナベースの開発環境([`.devcontainer/`](./.devcontainer))を使う。ランタイムはColima、パッケージマネージャーはaube。
